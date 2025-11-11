@@ -1,22 +1,22 @@
 import os
 import logging
-from typing import Optional
-import pandas as pd
+import datetime
+import time
 import yaml
 from dotenv import load_dotenv
 import requests
 import json
-import datetime
-import time
-from pathlib import Path
 
-#logger = logging.getLogger(__name__)
 
-#loading API key from secrets/.env
+logger = logging.getLogger(__name__)
+
+# loading API key from secrets/.env
+logging.info('Fetching API Key...')
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
-def load_config(config_path: str = "config.yaml") -> dict: #The equal makes it default
+
+def load_config(config_path: str = "config.yaml") -> dict:
     """
     Loads config file to centralize and control project behavior.
 
@@ -30,17 +30,17 @@ def load_config(config_path: str = "config.yaml") -> dict: #The equal makes it d
         config = yaml.safe_load(f)
     return config
 
+#Obtaining API info to make API request
+logging.info('Loading config...')
 config = load_config()
-
-base_url= config.get('api_information')['base_url']
+base_url = config.get('api_information')['base_url']
 endpoint = config.get('api_information')['endpoint']
 endpoint_url = f"{base_url}{endpoint}"
 headers = config.get('api_information')['headers']
 headers['Authorization'] = f"{API_KEY}"
 
+# Creating PySimFin class. This is the API wrapper we will use to make API calls.
 
-
-#Creating PySimFin class. This is the API wrapper we will use to make API calls.
 class PySimFin:
     def __init__(self):
         self.endpoint_url = f"{endpoint_url}"
@@ -79,23 +79,38 @@ class PySimFin:
             print(f"Failed to retrieve data. Status code: {response.status_code}")
 
 
-#create a function for this here
+logging.info('Obtaining stock price data...')
 
+def get_stock_price_data_today():
 
-stock_price_today = PySimFin()
-price_data = []
+    # Creating PySimFin Object to make API request
+    stock_price_today = PySimFin()
+    
+    #Create list to add the data to
+    price_data = []
 
-for company in config.get('companies'):
-    ticker = str(company['ticker'])
-    #ind_stock_price = stock_price_today.get_share_prices_today(ticker) #Should use this one --> issue is that on weekends it will be empty
-    ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
-    price_data.extend(ind_stock_price)
-    time.sleep(0.5) #Need to pause execution for 0.5 seconds as only 2 requests are alowed per minute on SymFin.
-
+    #Make API call for every single company in the config.yaml
+    for company in config.get('companies'):
+        ticker = str(company['ticker'])
+        #ind_stock_price = stock_price_today.get_share_prices_today(ticker) #Should use this one --> issue is that on weekends it will be empty
+        ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
+        price_data.extend(ind_stock_price)
+        time.sleep(0.5) #Need to pause execution for 0.5 seconds as only 2 requests are alowed per minute on SymFin.
+    #return price_data
+    if len(price_data) == 0:
+        print('The data for today has not been refreshed yet')
+    else:
+        print(price_data)
+        with open("./data/raw/raw_data.json", "w") as file: #EXPLORE THIS!! NEED TO ADD TO CONFIG
+            json.dump(price_data, file)
+        # Need to do a data validation step here --> len(price_data) should be equal to 40 as there are 40 companies 
+        ## in the config
 
 if __name__ == "__main__":
 
     try:
-        print(price_data)
+        get_stock_price_data_today()
+        logging.info('Successfully obtained stock price data')
+        #print(price_data)
     except Exception:
-        print('failure')
+        logging.error('an issue is ocurring --> error')

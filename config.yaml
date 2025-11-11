@@ -29,7 +29,7 @@ companies:
   - name: "Microsoft"
     ticker: "MSFT"
   - name: "Amazon"
-    ticker: "MSFT"
+    ticker: "AMZN"
   - name: "Meta Platforms"
     ticker: "META"
   - name: "Alphabet Inc. (Class C)"

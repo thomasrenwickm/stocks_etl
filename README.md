@@ -58,7 +58,6 @@ STOCKS_ETL/
 │   ├── processed/
 │   └── raw/
 ├── logs/
-├── notebooks/
 ├── src/
 │   ├── extract/
 │   ├── transform/

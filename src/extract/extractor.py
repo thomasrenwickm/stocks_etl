@@ -2,19 +2,12 @@ import os
 import logging
 import datetime
 import time
+import json
 import yaml
 from dotenv import load_dotenv
 import requests
-import json
-
 
 logger = logging.getLogger(__name__)
-
-# loading API key from secrets/.env
-logger.info('Fetching API Key...')
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-
 
 def load_config(config_path: str = "config.yaml") -> dict:
     """
@@ -30,7 +23,15 @@ def load_config(config_path: str = "config.yaml") -> dict:
         config = yaml.safe_load(f)
     logger.info('Config loaded!')
     return config
-    
+
+
+# NEED TO SOMEHOW GET THESE TWO BLOCKS OF CODE BELOW
+# AND TURN THEM INTO A FUNCTION!
+
+# loading API key from secrets/.env
+logger.info('Fetching API Key...')
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
 
 #Obtaining API info to make API request
 logger.info('Loading config...')
@@ -41,7 +42,6 @@ endpoint_url = f"{base_url}{endpoint}"
 headers = config.get('api_information')['headers']
 headers['Authorization'] = f"{API_KEY}"
 
-# Creating PySimFin class. This is the API wrapper we will use to make API calls.
 
 class PySimFin:
     def __init__(self):
@@ -50,56 +50,51 @@ class PySimFin:
 
     def get_share_prices_yesterday(self, ticker: str):
         yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
-        yesterday_str = str(yesterday).split()[0] #get yesterday's date
+        yesterday_str = str(yesterday).split()[0]
         params = {'ticker': ticker,
                   'start': yesterday_str}
-        response = requests.get(self.endpoint_url, headers=self.headers, params=params)
+        response = requests.get(self.endpoint_url, 
+                                headers=self.headers, 
+                                params=params)
         
         if yesterday.weekday() in list(range(0,5,1)):
             if response.status_code == 200:
                 data = response.json()
                 return data
             else:
-                print(f"Failed to retrieve data. Status code: {response.status_code}")
+                print(f"""Failed to retrieve data. 
+                      Status code: {response.status_code}""")
         else:
-            print('No data available for the weekend as the Stock Market is closed!')
-
-
+            print("""No data available for the weekend
+                   as the Stock Market is closed!""")
 
 
 def get_stock_price_data_yesterday():
 
-    # Creating PySimFin Object to make API request
     stock_price_today = PySimFin()
-    
-    #Create list to add the data to
     price_data = []
 
-    #Make API call for every single company in the config.yaml
     for company in config.get('companies'):
-        logger.info(f'Obtaining stock price data for {company['name']}')
+        logger.info('Obtaining stock price data for %s', company['name'])
         ticker = str(company['ticker'])
-        #ind_stock_price = stock_price_today.get_share_prices_today(ticker) #Should use this one --> issue is that on weekends it will be empty
-        #ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
         ind_stock_price = stock_price_today.get_share_prices_yesterday(ticker)
         price_data.extend(ind_stock_price)
         time.sleep(0.5) #Need to pause execution for 0.5 seconds as only 2 requests are alowed per minute on SymFin.
-    #return price_data
-    #if len(price_data) == 0:
-        #print('The data for today has not been refreshed yet')
-    #else:
-    print(len(price_data))
-    with open("./data/raw/raw_data.json", "w") as file: #EXPLORE THIS!! NEED TO ADD TO CONFIG
+
+    with open(f"{config.get('data_source')['raw_path']}", "w") as file:
         json.dump(price_data, file)
-        # Need to do a data validation step here --> len(price_data) should be equal to 40 as there are 40 companies 
-        ## in the config
+
+    print(f"""Data validation check: There are {len(config.get('companies'))}
+        companies in the config.yaml and {len(price_data)} have been loaded
+        into the raw json file""") #Maybe can do this as a log or seperate function?
+
 
 if __name__ == "__main__":
 
     try:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
         get_stock_price_data_yesterday()
-        logger.info('Successfully obtained stock price data')
-        #print(price_data)
-    except Exception:
-        logger.error('an issue is ocurring --> error')
+        logger.info('Stock price data has been extracted successfully!')
+        
+    except Exception as e:
+        logger.error('The extractor.py module has failed')

@@ -50,7 +50,7 @@ if __name__ == "__main__":
         df = transformations(price_data) #here we create the df to be able to save it
         load_transformed_data(df) #This doesn't need to be here. Only in main
         print(df)
-        logging.info('Successful')
+        logger.info('Successful')
         
     except Exception:
-        logging.error('an issue is ocurring --> error')
+        logger.error('an issue is ocurring --> error')

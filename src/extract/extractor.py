@@ -11,7 +11,7 @@ import json
 logger = logging.getLogger(__name__)
 
 # loading API key from secrets/.env
-logging.info('Fetching API Key...')
+logger.info('Fetching API Key...')
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
@@ -31,7 +31,7 @@ def load_config(config_path: str = "config.yaml") -> dict:
     return config
 
 #Obtaining API info to make API request
-logging.info('Loading config...')
+logger.info('Loading config...')
 config = load_config()
 base_url = config.get('api_information')['base_url']
 endpoint = config.get('api_information')['endpoint']
@@ -98,7 +98,7 @@ class PySimFin:
         #pass and say it is weekend and that there is no available data as markets are closed)
 
 
-logging.info('Obtaining stock price data...')
+
 
 def get_stock_price_data_yesterday():
 
@@ -110,6 +110,7 @@ def get_stock_price_data_yesterday():
 
     #Make API call for every single company in the config.yaml
     for company in config.get('companies'):
+        logger.info('Obtaining stock price data...')
         ticker = str(company['ticker'])
         #ind_stock_price = stock_price_today.get_share_prices_today(ticker) #Should use this one --> issue is that on weekends it will be empty
         #ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
@@ -130,7 +131,7 @@ if __name__ == "__main__":
 
     try:
         get_stock_price_data_yesterday()
-        logging.info('Successfully obtained stock price data')
+        logger.info('Successfully obtained stock price data')
         #print(price_data)
     except Exception:
-        logging.error('an issue is ocurring --> error')
+        logger.error('an issue is ocurring --> error')

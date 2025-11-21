@@ -46,14 +46,15 @@ def setup_logging(log_cfg):
 def main():
     config = load_config()
     setup_logging(config.get("logging", {}))
-    logging.info('logging setup successfully!')
+    logger = logging.getLogger(__name__)
+    logger.info('logging setup successfully!')
     get_stock_price_data_yesterday()
 
     price_data = read_raw_data()
     df = transformations(price_data) #here we create the df to be able to save it
     load_transformed_data(df) #This doesn't need to be here. Only in main
     print(df)
-    logging.info('Successful')
+    logger.info('Successful')
 
 
 

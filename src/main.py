@@ -4,7 +4,7 @@
 
 import os
 from src.extract.extractor import load_config
-from src.extract.extractor  import get_stock_price_data_today
+from src.extract.extractor  import get_stock_price_data_yesterday
 from src.transform.transform import read_raw_data
 from src.transform.transform import transformations
 from src.transform.transform import load_transformed_data
@@ -47,7 +47,7 @@ def main():
     config = load_config()
     setup_logging(config.get("logging", {}))
     logging.info('logging setup successfully!')
-    get_stock_price_data_today()
+    get_stock_price_data_yesterday()
 
     price_data = read_raw_data()
     df = transformations(price_data) #here we create the df to be able to save it

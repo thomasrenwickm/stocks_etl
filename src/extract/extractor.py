@@ -66,7 +66,7 @@ class PySimFin:
         else:
             print(f"Failed to retrieve data. Status code: {response.status_code}")
     
-    #This will be the only one we need, the rest can go
+
     def get_share_prices_today(self, ticker: str):
         today = str(datetime.datetime.today()).split()[0] #gets today's date
         params = {'ticker': ticker,
@@ -78,10 +78,29 @@ class PySimFin:
         else:
             print(f"Failed to retrieve data. Status code: {response.status_code}")
 
+    def get_share_prices_yesterday(self, ticker: str):
+        yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
+        yesterday_str = str(yesterday).split()[0] #get yesterday's date
+        params = {'ticker': ticker,
+                  'start': yesterday_str}
+        response = requests.get(self.endpoint_url, headers=self.headers, params=params)
+        #if weekday --> do this
+        if yesterday.weekday() in list(range(0,5,1)):
+            if response.status_code == 200:
+                data = response.json()
+                return data
+            else:
+                print(f"Failed to retrieve data. Status code: {response.status_code}")
+        else:
+            print('No data available for the weekend as the Stock Market is closed')
+
+        #else weekend:
+        #pass and say it is weekend and that there is no available data as markets are closed)
+
 
 logging.info('Obtaining stock price data...')
 
-def get_stock_price_data_today():
+def get_stock_price_data_yesterday():
 
     # Creating PySimFin Object to make API request
     stock_price_today = PySimFin()
@@ -93,23 +112,24 @@ def get_stock_price_data_today():
     for company in config.get('companies'):
         ticker = str(company['ticker'])
         #ind_stock_price = stock_price_today.get_share_prices_today(ticker) #Should use this one --> issue is that on weekends it will be empty
-        ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
+        #ind_stock_price = stock_price_today.get_share_prices_verbose(ticker, '2025-11-07','2025-11-08')
+        ind_stock_price = stock_price_today.get_share_prices_yesterday(ticker)
         price_data.extend(ind_stock_price)
         time.sleep(0.5) #Need to pause execution for 0.5 seconds as only 2 requests are alowed per minute on SymFin.
     #return price_data
-    if len(price_data) == 0:
-        print('The data for today has not been refreshed yet')
-    else:
-        print(price_data)
-        with open("./data/raw/raw_data.json", "w") as file: #EXPLORE THIS!! NEED TO ADD TO CONFIG
-            json.dump(price_data, file)
+    #if len(price_data) == 0:
+        #print('The data for today has not been refreshed yet')
+    #else:
+    print(len(price_data))
+    with open("./data/raw/raw_data.json", "w") as file: #EXPLORE THIS!! NEED TO ADD TO CONFIG
+        json.dump(price_data, file)
         # Need to do a data validation step here --> len(price_data) should be equal to 40 as there are 40 companies 
         ## in the config
 
 if __name__ == "__main__":
 
     try:
-        get_stock_price_data_today()
+        get_stock_price_data_yesterday()
         logging.info('Successfully obtained stock price data')
         #print(price_data)
     except Exception:

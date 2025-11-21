@@ -53,8 +53,7 @@ def main():
     price_data = read_raw_data()
     df = transformations(price_data) #here we create the df to be able to save it
     load_transformed_data(df) #This doesn't need to be here. Only in main
-    print(df)
-    logger.info('Successful')
+    logger.info('The Stock ETL Pipeline has run successfully!')
 
 
 
